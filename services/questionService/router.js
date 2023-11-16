@@ -28,7 +28,7 @@ app.use(async (req, res, next) => {
         var accessToken = null;
         const clientIP = req.headers.host.split(':')[0];
         console.log("request from: " + clientIP)
-        const allowedPorts = ['user', 'question', 'matching', 'database'];
+        const allowedPorts = ['user-service-service.default.svc.cluster.local', 'question-service-service.default.svc.cluster.local', 'matching-service-service.default.svc.cluster.local', 'database-service-service.default.svc.cluster.local'];
 
         if (allowedPorts.includes(clientIP)) {
             next();
