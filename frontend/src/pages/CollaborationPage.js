@@ -72,19 +72,35 @@ function CollaborationPage({setIsMatched}) {
   const [userData, setUserData] = useState(null);
   const [user, setUser] = useState(null);
 
+  const waitForAccessToken = () => {
+    return new Promise((resolve, reject) => {
+      const checkToken = () => {
+        const accessToken = localStorage.getItem('accessToken');
+        if (accessToken) {
+          console.log("Access token found.")
+          resolve(accessToken);
+        } else {
+          setTimeout(checkToken, 100); // Check again after 100ms
+        }
+      };
+      checkToken();
+    });
+  };
+
   const fetchUserData = async (user) => {
     try {
       if (!user) {
         console.error("No user logged in.");
         return;
       }
-
-      const response = await axios.get(`${userURL}/user`, { params: { 'email': user.email }, headers: {'Cache-Control': 'no-cache'} });
+      const accessToken = await waitForAccessToken();
+      const response = await axios.get(`${userURL}/user`, { params: { 'email': user.email }, headers: {'Authorization':  `Bearer ${accessToken}`, 'Cache-Control': 'no-cache'}});
       //console.log(response.data);
       
       setUserData(response.data);
     } catch (error) {
-      console.error("Error:", error);
+      if (error.response && error.response.status === 401) fetchUserData(user);
+      else console.error("Error:", error);
     }
   };
 

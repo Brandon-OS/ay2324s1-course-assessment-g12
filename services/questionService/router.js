@@ -23,6 +23,27 @@ app.use(cors());
 //     }
 // });
 
+app.use(async (req, res, next) => {
+    try {
+        var accessToken = null;
+        const clientIP = req.headers.host.split(':')[0];
+        console.log("request from: " + clientIP)
+        const allowedPorts = ['user', 'question', 'matching', 'database'];
+
+        if (allowedPorts.includes(clientIP)) {
+            next();
+        } else {
+            if (req.headers.authorization) accessToken = req.headers.authorization.split('Bearer ')[1];
+            const isAuthenticated = await axios.get(`${databaseURL}/user/authenticate`, { params: req.query, headers: { 'Authorization': `Bearer ${accessToken}` } });
+            if (isAuthenticated.data) next();
+        }
+    } catch (error) {
+        if (error.response && error.response.status === 401) {
+            res.status(error.response.status).json({ error: error.response.data.error })
+        } else console.error(error)
+    }
+});
+
 app.get("/", (req, res) => {
     res.send("Hello World");
 });
@@ -93,6 +114,8 @@ app.post("/question/like", async (req, res) => {
             params: { email: email },
             headers: {Authorization: `Bearer ${accessToken}`},
         });
+
+        console.log(userData)
 
         const username = userData.data.username;
         const response = await axios.post(`${databaseURL}/question/like`,

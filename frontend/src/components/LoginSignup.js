@@ -58,33 +58,37 @@ const LoginSignup = () => {
       }
     } else {
       try {
-        const responseForEmail = await axios.get(`${userURL}/user/check/email`, { params: { "email": email } });
-        const responseForUsername = await axios.get(`${userURL}/user/check/username`, { params: { "username": username } });
-        if (responseForEmail.data.emailExists) {
-          alert('Email already exists. Please log in.')
-        } else if (responseForUsername.data.usernameExists) {
-          alert('Username already exists. Please choose another username.');
-        } else {
-            await axios.post(`${userURL}/user`, {
-              "email": email,
-              "username": username,
-              "language": language,
-              "level": level,
-              "role": "registered user"
-            });
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await auth.currentUser.getIdToken(true).then(async (idToken) => {
+          localStorage.setItem('accessToken', idToken);
+          const responseForUsername = await axios.get(`${userURL}/user/check/username`, { params: { "username": username }, headers: {
+            'Authorization': `Bearer ${idToken}`, 'Cache-Control': 'no-cache'
+          } });
           
-          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-         
-          await auth.currentUser.getIdToken(true).then((idToken) => {
-            localStorage.setItem('accessToken', idToken);
-          }).catch((error) => {
-            console.log(error);
-          });
-        
-          console.log('User signed up successfully.', userCredential.user);
-          navigate('/Page/Home');
-        }
+          if (responseForUsername.data.usernameExists) {
+            alert('Username already exists. Please choose another username.');
+          } else {
+              console.log("creating a new user")
+              await axios.post(`${userURL}/user`, {
+                "email": email,
+                "username": username,
+                "language": language,
+                "level": level,
+                "role": "registered user"
+              }, { headers: {
+                'Authorization': `Bearer ${idToken}`, 'Cache-Control': 'no-cache'
+              }}).then(response => {
+                console.log(response)
+                console.log('User signed up successfully.', userCredential.user);
+              }).finally(() => {
+                navigate('/Page/Home')
+              })
+          }
+        }).catch((error) => {
+          console.log(error);
+        });
       } catch (error) {
+        if (error.code === "auth/email-already-in-use") alert("Email already in use. Please log in.");
         console.error('Error signing up:', error);
       }
     }

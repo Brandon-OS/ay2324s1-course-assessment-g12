@@ -17,10 +17,21 @@ app.use(cors());
 
 app.use(async (req, res, next) => {
     try {
-        const isAuthenticated = await axios.get(`${databaseURL}/user/authenticate`, { params: req.query, headers: req.headers });
-        if (isAuthenticated.data) next();
+        var accessToken = null;
+        const hostPort = req.headers.host.split(':')[1];
+        const allowedPorts = ['user:3001', 'question:3002', 'matching:3003', 'database:3005'];
+
+        if (allowedPorts.includes(hostPort)) {
+            next();
+        } else {
+            if (req.headers.authorization) accessToken = req.headers.authorization.split('Bearer ')[1];
+            const isAuthenticated = await axios.get(`${databaseURL}/user/authenticate`, { params: req.query, headers: { 'Authorization': `Bearer ${accessToken}` } });
+            if (isAuthenticated.data) next();
+        }
     } catch (error) {
-        res.status(error.response.status).json({ error: error.response.data.error })
+        if (error.response && error.response.status === 401) {
+            res.status(error.response.status).json({ error: error.response.data.error })
+        } else console.error(error)
     }
 });
 
@@ -37,6 +48,7 @@ app.delete("/user", async (req, res) => {
 
 app.post("/user", async (req, res) => {
     try {
+        console.log("posting user")
         const data = req.body;
         const response = await axios.post(`${databaseURL}/user`, data, {headers: req.headers});
         res.send(response.data);

@@ -35,7 +35,7 @@ const LikedQuestionList = () => {
 
   const fetchLikedQuestions = async (email) => {
     try {
-  
+      console.log("getting liked questions")
       const response = await axios.get(`${questionURL}/questions/like`, {
         params: {
           email: email,
@@ -66,7 +66,6 @@ const LikedQuestionList = () => {
       }
 
       // Send a request to your server to update the likes
-      console.log('despacito')
       const response = await axios.post(`${questionURL}/question/like`, {
         email: auth.currentUser.email,
         title: question.title,

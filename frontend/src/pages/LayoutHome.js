@@ -9,7 +9,20 @@ import CollaborationPage from './CollaborationPage';
 import { userApi } from '../apis.js';
 
 const userUrl = userApi;
-axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('accessToken')}`;
+const waitForAccessToken = () => {
+  return new Promise((resolve, reject) => {
+    const checkToken = () => {
+      const accessToken = localStorage.getItem('accessToken');
+      if (accessToken) {
+        console.log("Access token found.")
+        resolve(accessToken);
+      } else {
+        setTimeout(checkToken, 100); // Check again after 100ms
+      }
+    };
+    checkToken();
+  });
+};
 
 const LayoutHome = () => {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -21,7 +34,8 @@ const LayoutHome = () => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
           if (user) {
             console.log('User email:', user.email);
-            const response = await axios.get(`${userUrl}/user/authenticate`, { params: { "email": user.email }});
+            const accessToken = await waitForAccessToken();
+            const response = await axios.get(`${userUrl}/user/authenticate`, { params: { "email": user.email }, headers: {'Cache-Control': 'no-cache', 'Authorization':  `Bearer ${accessToken}`} });
             const isAdmin = response.data;
             console.log('isAdmin:', isAdmin);
             setIsAdmin(isAdmin);
