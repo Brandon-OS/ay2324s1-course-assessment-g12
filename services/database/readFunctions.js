@@ -220,7 +220,7 @@ async function getQuestionsFromUser(username) {
 async function getLikedQuestions(username) {
     try {
         const questions = [];
-        console.log(username)
+        console.log("getting liked questions for: " + username)
         const questionsRef = db.collection("users").doc(username).collection("likes");
         const querySnapshot = await questionsRef.get();
 
