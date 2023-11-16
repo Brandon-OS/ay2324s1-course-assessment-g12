@@ -19,7 +19,7 @@ app.use(async (req, res, next) => {
     try {
         var accessToken = null;
         const hostPort = req.headers.host.split(':')[1];
-        const allowedPorts = ['3001', '3002', '3003', '3005'];
+        const allowedPorts = ['user:3001', 'question:3002', 'matching:3003', 'database:3005'];
 
         if (allowedPorts.includes(hostPort)) {
             next();

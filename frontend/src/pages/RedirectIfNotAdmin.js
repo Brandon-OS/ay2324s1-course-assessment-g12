@@ -6,8 +6,20 @@ import { userApi } from '../apis.js';
 
 const userURL = userApi;
 
-axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('accessToken')}`;
-
+const waitForAccessToken = () => {
+  return new Promise((resolve, reject) => {
+    const checkToken = () => {
+      const accessToken = localStorage.getItem('accessToken');
+      if (accessToken) {
+        console.log("Access token found.")
+        resolve(accessToken);
+      } else {
+        setTimeout(checkToken, 100); // Check again after 100ms
+      }
+    };
+    checkToken();
+  });
+};
 
 function RedirectIfAdmin({ children }) {
   const navigate = useNavigate();
@@ -19,8 +31,8 @@ function RedirectIfAdmin({ children }) {
         // User is signed in.
         try {
           const email = user.email; 
-
-          const isAdmin = await axios.get(`${userURL}/user/authenticate`, { params: { email: email } });
+          const accessToken = await waitForAccessToken();
+          const isAdmin = await axios.get(`${userURL}/user/authenticate`, { params: { email: email }, headers: {'Authorization':  `Bearer ${accessToken}`, 'Cache-Control': 'no-cache'}});
 
           // Check if the user is an admin
           if (!isAdmin.data) {

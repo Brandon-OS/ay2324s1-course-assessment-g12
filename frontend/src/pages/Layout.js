@@ -9,8 +9,20 @@ import { userApi } from '../apis.js';
 
 const userUrl = userApi;
 
-axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('accessToken')}`;
-
+const waitForAccessToken = () => {
+  return new Promise((resolve, reject) => {
+    const checkToken = () => {
+      const accessToken = localStorage.getItem('accessToken');
+      if (accessToken) {
+        console.log("Access token found.")
+        resolve(accessToken);
+      } else {
+        setTimeout(checkToken, 100); // Check again after 100ms
+      }
+    };
+    checkToken();
+  });
+};
 
 const Layout = ({ children }) => {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -22,7 +34,8 @@ const Layout = ({ children }) => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
           if (user) {
             console.log('User email:', user.email);
-            const response = await axios.get(`${userUrl}/user/authenticate`, { params: { "email": user.email } });
+            const accessToken = await waitForAccessToken();
+            const response = await axios.get(`${userUrl}/user/authenticate`, { params: { "email": user.email }, headers: {'Authorization':  `Bearer ${accessToken}`, 'Cache-Control': 'no-cache'} });
             const isAdmin = response.data;
             console.log('isAdmin:', isAdmin);
             setIsAdmin(isAdmin);

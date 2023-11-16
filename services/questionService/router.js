@@ -26,10 +26,11 @@ app.use(cors());
 app.use(async (req, res, next) => {
     try {
         var accessToken = null;
-        const hostPort = req.headers.host.split(':')[1];
-        const allowedPorts = ['3001', '3002', '3003', '3005'];
+        const clientIP = req.headers.host.split(':')[0];
+        console.log("request from: " + clientIP)
+        const allowedPorts = ['user', 'question', 'matching', 'database'];
 
-        if (allowedPorts.includes(hostPort)) {
+        if (allowedPorts.includes(clientIP)) {
             next();
         } else {
             if (req.headers.authorization) accessToken = req.headers.authorization.split('Bearer ')[1];
